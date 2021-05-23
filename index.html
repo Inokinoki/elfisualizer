@@ -185,9 +185,9 @@
             let minOffset = elfisualizedELF.size, maxOffset = 0;
             elfisualizedELF.sections.map(function(section) {
                 console.log(section);
-                if (section.entsize > 0) {
+                if (section.size > 0) {
                     if (section.offset < minOffset) minOffset = section.offset;
-                    if (section.offset + section.entsize > maxOffset) maxOffset = section.offset + section.entsize;
+                    if (section.offset + section.size > maxOffset) maxOffset = section.offset + section.size;
                 }
             });
             console.log(minOffset, maxOffset);
@@ -207,6 +207,17 @@
             textMetrix = layout_ctx.measureText(maxOffset + "");
             layout_ctx.fillText(maxOffset + "",
                 LAYOUT_CANVAS_BEGIN_X + LAYOUT_CANVAS_WIDTH - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            let color = 0;
+            elfisualizedELF.sections.map(function(section) {
+                if (section.size > 0) {
+                    color == 0 ? layout_ctx.fillStyle = 'green' : layout_ctx.fillStyle = 'yellow';
+                    console.log(section.size);
+                    layout_ctx.fillRect(LAYOUT_CANVAS_BEGIN_X + section.offset * LAYOUT_CANVAS_WIDTH / elfisualizedELF.size,
+                        LAYOUT_CANVAS_BEGIN_Y, section.size * LAYOUT_CANVAS_WIDTH / elfisualizedELF.size,
+                        LAYOUT_CANVAS_HEIGHT);
+                    color = color ? 0 : 1;
+                }
+            });
         }
     </script>
 </body>
