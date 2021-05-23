@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>elfisualize - an ELF Visualizer</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+</head>
+<body style="background: white;">
+    <p>
+        <span id="status">Nothing loaded</span>
+    </p>
+    <button onclick="open_file()">Open ELF File</button>
+    <canvas id="elf-layout" width="200" height="100" style="border:1px solid #000000;"></canvas>
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        async function open_file(params) {
+            const statusText = document.getElementById("status")
+            statusText.innerText = "Loading...";
+            const result = await ipcRenderer.invoke('load-file');
+            if (result.name) {
+                if (result.elf) {
+                    // Loaded
+                    statusText.innerText = "ELF file \"" + result.name + "\" loaded";
+                } else {
+                    // Not loaded
+                    statusText.innerText = "No ELF file loaded";
+                }
+            } else {
+                // Nothing
+                statusText.innerText = "Nothing loaded";
+            }
+        }
+    </script>
+</body>
+</html>
