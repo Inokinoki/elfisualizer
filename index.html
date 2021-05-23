@@ -42,7 +42,7 @@
             if (elf == null) return { size: 0, header: null, programs: [], sections: [] };
 
             let result = { size: size, programs: [], sections: [],
-                header: { offset: 0, size: elf.header.ehsize } };
+                header: elf.header };
 
             // TODO: parse programs and sections
             console.log(elf);
@@ -78,15 +78,57 @@
             // Header
             layout_ctx.fillStyle = 'green';
             layout_ctx.fillRect(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y,
-                elfisualizedELF.header.size, LAYOUT_CANVAS_HEIGHT);
+                elfisualizedELF.header.ehsize, LAYOUT_CANVAS_HEIGHT);
             layout_ctx.fillStyle = 'black';
             textMetrix = layout_ctx.measureText("Header");
             layout_ctx.fillText("Header",
-                LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.size / 2 - textMetrix.width / 2,
+                LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.ehsize / 2 - textMetrix.width / 2,
                 LAYOUT_HEIGHT - LAYOUT_MARGIN);
-            textMetrix = layout_ctx.measureText(elfisualizedELF.header.size);
-            layout_ctx.fillText(elfisualizedELF.header.size,
-                LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.size - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            textMetrix = layout_ctx.measureText(elfisualizedELF.header.ehsize);
+            layout_ctx.fillText(elfisualizedELF.header.ehsize,
+                LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.ehsize - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+
+            // Program header
+            layout_ctx.fillStyle = 'yellow';
+            const phOffset = elfisualizedELF.header.phoff - elfisualizedELF.header.ehsize;
+            layout_ctx.fillRect(LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.ehsize +
+                phOffset * LAYOUT_CANVAS_WIDTH / elfisualizedELF.size, LAYOUT_CANVAS_BEGIN_Y,
+                4 * elfisualizedELF.header.phnum, LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.fillStyle = 'black';
+            textMetrix = layout_ctx.measureText(elfisualizedELF.header.phnum + " PH");
+            layout_ctx.fillText(elfisualizedELF.header.phnum + " PH",
+                LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.ehsize +
+                phOffset * LAYOUT_CANVAS_WIDTH / elfisualizedELF.size +
+                4 * elfisualizedELF.header.phnum / 2 - textMetrix.width / 2,
+                LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            const phEndOffset = elfisualizedELF.header.phoff
+                + elfisualizedELF.header.phentsize * elfisualizedELF.header.phnum;
+            textMetrix = layout_ctx.measureText(phEndOffset + "");
+            layout_ctx.fillText(phEndOffset + "",
+                LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.ehsize +
+                phOffset * LAYOUT_CANVAS_WIDTH / elfisualizedELF.size +
+                4 * elfisualizedELF.header.phnum - textMetrix.width / 2,
+                LAYOUT_HEIGHT - LAYOUT_MARGIN);
+
+            // Section header
+            layout_ctx.fillStyle = 'yellow';
+            const shOffset = elfisualizedELF.header.shoff
+                + elfisualizedELF.header.shentsize * elfisualizedELF.header.shnum;
+            const shOffsetRight = (elfisualizedELF.size - shOffset) * LAYOUT_CANVAS_WIDTH / elfisualizedELF.size;
+            layout_ctx.fillRect(LAYOUT_CANVAS_BEGIN_X + LAYOUT_CANVAS_WIDTH - shOffsetRight -
+                4 * elfisualizedELF.header.shnum, LAYOUT_CANVAS_BEGIN_Y,
+                4 * elfisualizedELF.header.shnum, LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.fillStyle = 'black';
+            textMetrix = layout_ctx.measureText(elfisualizedELF.header.shnum + " SH");
+            layout_ctx.fillText(elfisualizedELF.header.shnum + " SH",
+                LAYOUT_CANVAS_BEGIN_X + LAYOUT_CANVAS_WIDTH - shOffsetRight -
+                4 * elfisualizedELF.header.shnum + 4 * elfisualizedELF.header.shnum / 2 - textMetrix.width / 2,
+                LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            textMetrix = layout_ctx.measureText(elfisualizedELF.header.shoff + "");
+            layout_ctx.fillText(elfisualizedELF.header.shoff + "",
+                LAYOUT_CANVAS_BEGIN_X + LAYOUT_CANVAS_WIDTH - shOffsetRight -
+                4 * elfisualizedELF.header.shnum - textMetrix.width / 2,
+                LAYOUT_HEIGHT - LAYOUT_MARGIN);
 
             if (programs_canvas) {
                 // TODO: Visualized programs
