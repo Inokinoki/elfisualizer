@@ -10,7 +10,10 @@
         <span id="status">Nothing loaded</span>
     </p>
     <button onclick="open_file()">Open ELF File</button>
-    <canvas id="elf-layout" width="200" height="100" style="border:1px solid #000000;"></canvas>
+    <br/>
+    <canvas id="elf-layout" width="550" height="60"></canvas>
+    <canvas id="elf-programs" width="550" height="60"></canvas>
+    <canvas id="elf-sections" width="550" height="60"></canvas>
     <script>
         const { ipcRenderer } = require('electron');
 
@@ -24,6 +27,7 @@
                     statusText.innerText = "ELF file \"" + result.name
                         + "\"(size " + result.size + "B) loaded";
                     const elfisualized = elfisualize(result.elf, result.size);
+                    visualize(elfisualized, document.getElementById("elf-layout"));
                 } else {
                     // Not loaded
                     statusText.innerText = "No ELF file loaded";
@@ -37,12 +41,65 @@
         function elfisualize(elf, size) {
             if (elf == null) return { size: 0, header: null, programs: [], sections: [] };
 
-            let result = { size: size, header: { offset: 0, size: elf.header.ehsize }, programs: [], sections: [] };
+            let result = { size: size, programs: [], sections: [],
+                header: { offset: 0, size: elf.header.ehsize } };
 
             // TODO: parse programs and sections
             console.log(elf);
 
             return result;
+        }
+        const LAYOUT_CANVAS_BEGIN_X = 25;
+        const LAYOUT_CANVAS_BEGIN_Y = 0;
+        const LAYOUT_CANVAS_HEIGHT = 40;
+        const LAYOUT_CANVAS_WIDTH = 500;
+        const LAYOUT_HEIGHT = 60;
+        const LAYOUT_MARGIN = 5;
+
+        function visualize(elfisualizedELF, layout_canvas, programs_canvas, sections_canvas) {
+            let textMetrix;
+            console.log(layout_canvas);
+            const layout_ctx = layout_canvas.getContext('2d');
+            console.log(layout_ctx);
+            // Block
+            layout_ctx.moveTo(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineTo(LAYOUT_CANVAS_BEGIN_X , LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.lineTo(LAYOUT_CANVAS_WIDTH + LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.lineTo(LAYOUT_CANVAS_WIDTH + LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineTo(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineWidth = 1;
+            layout_ctx.stroke();
+            textMetrix = layout_ctx.measureText("0");
+            layout_ctx.fillText("0", LAYOUT_CANVAS_BEGIN_X - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            textMetrix = layout_ctx.measureText(elfisualizedELF.size);
+            layout_ctx.fillText(elfisualizedELF.size,
+                LAYOUT_CANVAS_BEGIN_X + LAYOUT_CANVAS_WIDTH - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+
+            // Header
+            layout_ctx.fillStyle = 'green';
+            layout_ctx.fillRect(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y,
+                elfisualizedELF.header.size, LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.fillStyle = 'black';
+            textMetrix = layout_ctx.measureText("Header");
+            layout_ctx.fillText("Header",
+                LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.size / 2 - textMetrix.width / 2,
+                LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            textMetrix = layout_ctx.measureText(elfisualizedELF.header.size);
+            layout_ctx.fillText(elfisualizedELF.header.size,
+                LAYOUT_CANVAS_BEGIN_X + elfisualizedELF.header.size - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+
+            if (programs_canvas) {
+                // TODO: Visualized programs
+                const programs_ctx = programs_canvas.getContext('2d');
+                programs_ctx.fillStyle = 'white';
+                programs_ctx.fillRect(25, 0, 500, 50);
+            }
+            if (sections_canvas) {
+                // TODO: Visualized sections
+                const sections_ctx = sections_canvas.getContext('2d');
+                sections_ctx.fillStyle = 'white';
+                sections_ctx.fillRect(25, 0, 500, 50);
+            }
         }
     </script>
 </body>
