@@ -21,7 +21,9 @@
             if (result.name) {
                 if (result.elf) {
                     // Loaded
-                    statusText.innerText = "ELF file \"" + result.name + "\" loaded";
+                    statusText.innerText = "ELF file \"" + result.name
+                        + "\"(size " + result.size + "B) loaded";
+                    const elfisualized = elfisualize(result.elf, result.size);
                 } else {
                     // Not loaded
                     statusText.innerText = "No ELF file loaded";
@@ -30,6 +32,17 @@
                 // Nothing
                 statusText.innerText = "Nothing loaded";
             }
+        }
+
+        function elfisualize(elf, size) {
+            if (elf == null) return { size: 0, header: null, programs: [], sections: [] };
+
+            let result = { size: size, header: { offset: 0, size: elf.header.ehsize }, programs: [], sections: [] };
+
+            // TODO: parse programs and sections
+            console.log(elf);
+
+            return result;
         }
     </script>
 </body>

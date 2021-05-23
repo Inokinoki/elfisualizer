@@ -33,6 +33,7 @@ app.whenReady().then(() => {
         const elf = elf_tools.parse(elf_bytes)
         return {
           elf: elf,
+          size: elf_bytes.length,
           name: filename[0]
         };
       }
