@@ -184,8 +184,11 @@
         function visualizeSection(elfisualizedELF, layout_canvas) {
             let minOffset = elfisualizedELF.size, maxOffset = 0;
             elfisualizedELF.sections.map(function(section) {
-                if (section.offset < minOffset) minOffset = section.offset;
-                if (section.offset + section.filesz > maxOffset) maxOffset = section.offset + section.filesz;
+                console.log(section);
+                if (section.entsize > 0) {
+                    if (section.offset < minOffset) minOffset = section.offset;
+                    if (section.offset + section.entsize > maxOffset) maxOffset = section.offset + section.entsize;
+                }
             });
             console.log(minOffset, maxOffset);
             if (minOffset == elfisualizedELF) minOffset = 0;
