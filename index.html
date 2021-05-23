@@ -154,7 +154,6 @@
         function visualizeProgram(elfisualizedELF, layout_canvas) {
             let minOffset = elfisualizedELF.size, maxOffset = 0;
             elfisualizedELF.programs.map(function(program) {
-                console.log(program);
                 if (program.offset < minOffset) minOffset = program.offset;
                 if (program.offset + program.filesz > maxOffset) maxOffset = program.offset + program.filesz;
             });
@@ -175,13 +174,16 @@
             textMetrix = layout_ctx.measureText(maxOffset + "");
             layout_ctx.fillText(maxOffset + "",
                 LAYOUT_CANVAS_BEGIN_X + LAYOUT_CANVAS_WIDTH - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
-            
+            elfisualizedELF.programs.map(function(program) {
+                if (program.filesz > 0) {
+                    // TODO: need a segment tree
+                }
+            });
         }
 
         function visualizeSection(elfisualizedELF, layout_canvas) {
             let minOffset = elfisualizedELF.size, maxOffset = 0;
             elfisualizedELF.sections.map(function(section) {
-                console.log(section);
                 if (section.offset < minOffset) minOffset = section.offset;
                 if (section.offset + section.filesz > maxOffset) maxOffset = section.offset + section.filesz;
             });
