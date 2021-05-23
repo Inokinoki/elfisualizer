@@ -27,7 +27,8 @@
                     statusText.innerText = "ELF file \"" + result.name
                         + "\"(size " + result.size + "B) loaded";
                     const elfisualized = elfisualize(result.elf, result.size);
-                    visualize(elfisualized, document.getElementById("elf-layout"));
+                    visualize(elfisualized, document.getElementById("elf-layout"),
+                        document.getElementById("elf-programs"), document.getElementById("elf-sections"));
                 } else {
                     // Not loaded
                     statusText.innerText = "No ELF file loaded";
@@ -44,8 +45,18 @@
             let result = { size: size, programs: [], sections: [],
                 header: elf.header };
 
-            // TODO: parse programs and sections
+            // Parse programs and sections
             console.log(elf);
+
+            // Append programs
+            elf.programs.map(function(program) {
+                result.programs.push(program.header);
+            });
+
+            // Append sections
+            elf.sections.map(function(section) {
+                result.sections.push(section.header);
+            });
 
             return result;
         }
@@ -131,17 +142,66 @@
                 LAYOUT_HEIGHT - LAYOUT_MARGIN);
 
             if (programs_canvas) {
-                // TODO: Visualized programs
-                const programs_ctx = programs_canvas.getContext('2d');
-                programs_ctx.fillStyle = 'white';
-                programs_ctx.fillRect(25, 0, 500, 50);
+                // Visualized programs
+                visualizeProgram(elfisualizedELF, programs_canvas);
             }
             if (sections_canvas) {
-                // TODO: Visualized sections
-                const sections_ctx = sections_canvas.getContext('2d');
-                sections_ctx.fillStyle = 'white';
-                sections_ctx.fillRect(25, 0, 500, 50);
+                // Visualized sections
+                visualizeSection(elfisualizedELF, sections_canvas);
             }
+        }
+
+        function visualizeProgram(elfisualizedELF, layout_canvas) {
+            let minOffset = elfisualizedELF.size, maxOffset = 0;
+            elfisualizedELF.programs.map(function(program) {
+                console.log(program);
+                if (program.offset < minOffset) minOffset = program.offset;
+                if (program.offset + program.filesz > maxOffset) maxOffset = program.offset + program.filesz;
+            });
+            console.log(minOffset, maxOffset);
+            if (minOffset == elfisualizedELF) minOffset = 0;
+            if (maxOffset == 0) maxOffset = elfisualizedELF.size;
+            const layout_ctx = layout_canvas.getContext('2d');
+            // Block
+            layout_ctx.moveTo(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineTo(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.lineTo(LAYOUT_CANVAS_WIDTH + LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.lineTo(LAYOUT_CANVAS_WIDTH + LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineTo(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineWidth = 1;
+            layout_ctx.stroke();
+            textMetrix = layout_ctx.measureText(minOffset + "");
+            layout_ctx.fillText(minOffset + "", LAYOUT_CANVAS_BEGIN_X - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            textMetrix = layout_ctx.measureText(maxOffset + "");
+            layout_ctx.fillText(maxOffset + "",
+                LAYOUT_CANVAS_BEGIN_X + LAYOUT_CANVAS_WIDTH - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            
+        }
+
+        function visualizeSection(elfisualizedELF, layout_canvas) {
+            let minOffset = elfisualizedELF.size, maxOffset = 0;
+            elfisualizedELF.sections.map(function(section) {
+                console.log(section);
+                if (section.offset < minOffset) minOffset = section.offset;
+                if (section.offset + section.filesz > maxOffset) maxOffset = section.offset + section.filesz;
+            });
+            console.log(minOffset, maxOffset);
+            if (minOffset == elfisualizedELF) minOffset = 0;
+            if (maxOffset == 0) maxOffset = elfisualizedELF.size;
+            const layout_ctx = layout_canvas.getContext('2d');
+            // Block
+            layout_ctx.moveTo(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineTo(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.lineTo(LAYOUT_CANVAS_WIDTH + LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_HEIGHT);
+            layout_ctx.lineTo(LAYOUT_CANVAS_WIDTH + LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineTo(LAYOUT_CANVAS_BEGIN_X, LAYOUT_CANVAS_BEGIN_Y);
+            layout_ctx.lineWidth = 1;
+            layout_ctx.stroke();
+            textMetrix = layout_ctx.measureText(minOffset + "");
+            layout_ctx.fillText(minOffset + "", LAYOUT_CANVAS_BEGIN_X - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
+            textMetrix = layout_ctx.measureText(maxOffset + "");
+            layout_ctx.fillText(maxOffset + "",
+                LAYOUT_CANVAS_BEGIN_X + LAYOUT_CANVAS_WIDTH - textMetrix.width / 2, LAYOUT_HEIGHT - LAYOUT_MARGIN);
         }
     </script>
 </body>
