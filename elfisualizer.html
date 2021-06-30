@@ -1,0 +1,266 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=900, initial-scale=1'>
+    <title>elfisualizer</title>
+    <style>
+        html {
+            font-family: monospace;
+        }
+
+        #headertable {
+            width: 100%;
+        }
+
+        #rightmenu {
+            vertical-align: top;
+            text-align: right;
+        }
+
+        #rightmenu>* {
+            margin-top: 0px;
+        }
+
+        #credits {
+            color: #ddd;
+        }
+
+        #credits:hover {
+            color: #000;
+        }
+
+        #desc {
+            width: 250px;
+        }
+
+        #struct_infotables {
+            padding-right: 0px;
+        }
+
+        #data_infotables {
+            padding-left: 0px;
+        }
+
+        .conceal {
+            display: none;
+            border: 1px solid #000;
+            max-width: 600px;
+        }
+
+        #offsets {
+            display: inline-block;
+            text-align: right;
+        }
+
+        #bytes {
+            border: 1px solid;
+            display: inline-block;
+            word-break: break-word;
+            /* 16 bytes * (2 chars per byte + 1 space) - 1 final space + 1 due to a bug in chrome, where if
+         * you set width to X ch and put X characters, it may or may not wrap. */
+            width: 48ch;
+        }
+
+        #ascii {
+            border: 1px solid;
+            display: inline-block;
+            width: 16ch;
+        }
+
+        #vmap {
+            border: 1px solid;
+            display: inline-block;
+            width: 47ch;
+            vertical-align: top;
+            position: sticky;
+            top: 8px;
+        }
+
+        #sticky_table {
+            display: inline-block;
+            vertical-align: top;
+            position: sticky;
+            top: 8px;
+        }
+
+        #sticky_table>* {
+            vertical-align: top;
+        }
+
+        .hover:hover {
+            background-color: #ee9;
+        }
+
+        #ident {
+            background-color: #e99;
+        }
+
+        /* highlight children */
+        #ident:hover>* {
+            background-color: #ebb;
+        }
+
+        /* duplicate of .hover:hover with more specifity.
+       * used for elements like #magic, for whom
+       * rule #ident:hover > * would override .hover:hover rule */
+        #ident:hover>*.hover:hover {
+            background-color: #ee9;
+        }
+
+        /* same for #ehdr, but we also don't want to highlight #ident */
+        #ehdr {
+            background-color: #99e;
+        }
+
+        #ehdr:hover>*:not(#ident) {
+            background-color: #bbe;
+        }
+
+        #ehdr:hover>*.hover:hover:not(#ident) {
+            background-color: #ee9;
+        }
+
+        .phdr {
+            background-color: #eb9;
+        }
+
+        .phdr:hover>* {
+            background-color: #ed9;
+        }
+
+        .phdr_hover:hover {
+            background-color: #ef9;
+        }
+
+        .shdr {
+            background-color: #9be;
+        }
+
+        .shdr:hover>* {
+            background-color: #9de;
+        }
+
+        .shdr_hover:hover {
+            background-color: #9fe;
+        }
+
+        .segment {
+            background-color: #f99;
+        }
+
+        .section {
+            background-color: #f9f;
+        }
+
+        /* there are only sections inside segments due to code */
+        .segment>.section {
+            background: repeating-linear-gradient(-45deg,
+                    #f99,
+                    #f99 10px,
+                    #f9f 10px,
+                    #f9f 20px);
+        }
+
+        /* another duplicate of .hover:hover with more specifity */
+        .segment>.section.hover:hover {
+            background: initial;
+            background-color: #ee9;
+        }
+
+        .segment>.segment_subrange.hover:hover {
+            background: initial;
+            background-color: #f59;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="elf_status">
+        <p>
+            <span id="status">Nothing loaded</span>
+        </p>
+        <button onclick="open_file()">Open an ELF File</button>
+    </div>
+
+    <div id="elf_info">
+        <table id='headertable'>
+            <tr id='info_file_name'>
+                <td>File name:</td>
+                <td>target/debug/elfcat</td>
+            </tr>
+            <tr id='info_file_size'>
+                <td>File size:</td>
+                <td>4.4 MiB (4640576 B)</td>
+            </tr>
+            <tr id='info_class'>
+                <td>Object class:</td>
+                <td>64-bit</td>
+            </tr>
+            <tr id='info_data'>
+                <td>Data encoding:</td>
+                <td>Little endian</td>
+            </tr>
+            <tr id='info_abi'>
+                <td>ABI:</td>
+                <td>SysV</td>
+            </tr>
+            <tr id='info_e_type'>
+                <td>Type:</td>
+                <td>Shared object file (DYN)</td>
+            </tr>
+            <tr id='info_e_machine'>
+                <td>Architecture:</td>
+                <td>x86-64</td>
+            </tr>
+            <tr id='info_e_entry'>
+                <td>Entrypoint:</td>
+                <td>0xa810</td>
+            </tr>
+            <tr id='info_ph'>
+                <td>Program headers:</td>
+                <td>
+                    <span id='info_e_phnum'>12</span> * <span id='info_e_phentsize'>56</span> @ <span
+                        id='info_e_phoff'>64</span>
+                </td>
+            </tr>
+            <tr id='info_sh'>
+                <td>Section headers:</td>
+                <td>
+                    <span id='info_e_shnum'>43</span> * <span id='info_e_shentsize'>64</span> @ <span
+                        id='info_e_shoff'>4637824</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        window.onload = () => {
+            // Temporally hide everything
+            document.getElementById("elf_info").style.display = "none";
+        }
+
+        async function open_file(params) {
+            const statusText = document.getElementById("status")
+            statusText.innerText = "Loading...";
+            const result = await ipcRenderer.invoke('load-file');
+            if (result.name) {
+                if (result.elf) {
+                    // Loaded
+                    statusText.innerText = "ELF file \"" + result.name
+                        + "\"(size " + result.size + "B) loaded";
+                } else {
+                    // Not loaded
+                    statusText.innerText = "No ELF file loaded";
+                }
+            } else {
+                // Nothing
+                statusText.innerText = "Nothing loaded";
+            }
+        }
+    </script>
+</body>
+
+</html>
