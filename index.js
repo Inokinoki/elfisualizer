@@ -31,10 +31,30 @@ app.whenReady().then(() => {
 
         // parse the data
         const elf = elf_tools.parse(elf_bytes)
+        // FIXME: Use real data
+        // TODO: Use typescript
         return {
           elf: elf,
-          size: elf_bytes.length,
-          name: filename[0]
+          elf_info: {
+            size: elf_bytes.length,
+            name: filename[0],
+            class: 0,
+            encoding: 1,
+            abi: 0,
+            file_type: 0,
+            arch: 0,
+            entry_point: 64,
+            program_header_info: {
+              num: 5,
+              size: 64,
+              offset: 64
+            },
+            section_header_info: {
+              num: 5,
+              size: 64,
+              offset: 64
+            }
+          }
         };
       }
   })

@@ -188,35 +188,35 @@
         <table id='headertable'>
             <tr id='info_file_name'>
                 <td>File name:</td>
-                <td>target/debug/elfcat</td>
+                <td id='info_file_name_value'>target/debug/elfcat</td>
             </tr>
             <tr id='info_file_size'>
                 <td>File size:</td>
-                <td>4.4 MiB (4640576 B)</td>
+                <td id='info_file_size_value'>4.4 MiB (4640576 B)</td>
             </tr>
             <tr id='info_class'>
                 <td>Object class:</td>
-                <td>64-bit</td>
+                <td id='info_class_value'>64-bit</td>
             </tr>
             <tr id='info_data'>
                 <td>Data encoding:</td>
-                <td>Little endian</td>
+                <td id='info_data_value'>Little endian</td>
             </tr>
             <tr id='info_abi'>
                 <td>ABI:</td>
-                <td>SysV</td>
+                <td id='info_abi_value'>SysV</td>
             </tr>
             <tr id='info_e_type'>
                 <td>Type:</td>
-                <td>Shared object file (DYN)</td>
+                <td id='info_e_type_value'>Shared object file (DYN)</td>
             </tr>
             <tr id='info_e_machine'>
                 <td>Architecture:</td>
-                <td>x86-64</td>
+                <td id='info_e_machine_value'>x86-64</td>
             </tr>
             <tr id='info_e_entry'>
                 <td>Entrypoint:</td>
-                <td>0xa810</td>
+                <td id='info_e_entry_value'>0xa810</td>
             </tr>
             <tr id='info_ph'>
                 <td>Program headers:</td>
@@ -246,11 +246,13 @@
             const statusText = document.getElementById("status")
             statusText.innerText = "Loading...";
             const result = await ipcRenderer.invoke('load-file');
-            if (result.name) {
-                if (result.elf) {
+            if (result) {
+                if (result.elf_info) {
                     // Loaded
-                    statusText.innerText = "ELF file \"" + result.name
-                        + "\"(size " + result.size + "B) loaded";
+                    statusText.innerText = "ELF file \"" + result.elf_info.name
+                        + "\" loaded";
+                    update_elf_info(result.elf_info);
+                    document.getElementById("elf_info").style.display = "block";
                 } else {
                     // Not loaded
                     statusText.innerText = "No ELF file loaded";
@@ -259,6 +261,18 @@
                 // Nothing
                 statusText.innerText = "Nothing loaded";
             }
+        }
+
+        function update_elf_info(elf_info) {
+            document.getElementById("info_file_name_value").innerText = elf_info.name;
+            document.getElementById("info_file_size_value").innerText = elf_info.size + " B";
+            document.getElementById("info_e_phnum").innerText = elf_info.program_header_info.num;
+            document.getElementById("info_e_phentsize").innerText = elf_info.program_header_info.size;
+            document.getElementById("info_e_phoff").innerText = elf_info.program_header_info.offset;
+            document.getElementById("info_e_shnum").innerText = elf_info.section_header_info.num;
+            document.getElementById("info_e_shentsize").innerText = elf_info.section_header_info.size;
+            document.getElementById("info_e_shoff").innerText = elf_info.section_header_info.offset;
+            // TODO: Add more information
         }
     </script>
 </body>
