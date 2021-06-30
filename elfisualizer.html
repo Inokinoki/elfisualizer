@@ -234,6 +234,13 @@
             </tr>
         </table>
     </div>
+    <div id="elf_data">
+        <div id='offsets'></div>
+        <div id='bytes'>
+        </div>
+        <div id='ascii'>
+        </div>
+    </div>
     <script>
         const { ipcRenderer } = require('electron');
 
@@ -273,6 +280,41 @@
             document.getElementById("info_e_shentsize").innerText = elf_info.section_header_info.size;
             document.getElementById("info_e_shoff").innerText = elf_info.section_header_info.offset;
             // TODO: Add more information
+
+            // Initialize placeholder for contents
+            init_placeholder(elf_info);
+        }
+
+        function init_placeholder(elf_info) {
+            let columns = 16;
+            let rows = Math.ceil(elf_info.size / columns);
+            let elements = "";
+            var offset = 0;
+            for (var i = 0; i < rows; ++i) {
+                elements += offset.toString(16) + "</br>\n";
+                offset += columns;
+            }
+            document.getElementById('offsets').innerHTML = elements;
+            let padding = elf_info.size - (rows - 1) * columns;
+            let byte_placeholder_last_line = "";
+            let ascii_placeholder_last_line = "";
+            for (var i = 0; i < padding; i++) {
+                if (i == 0) {
+                    byte_placeholder_last_line = '\n';
+                    ascii_placeholder_last_line = '\n';
+                }
+                byte_placeholder_last_line += "00 ";
+                ascii_placeholder_last_line += ".";
+            }
+            let byte_placeholder = new Array(rows - 1)
+            byte_placeholder.fill("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ");
+            console.log(byte_placeholder.length);
+            document.getElementById("bytes").innerText = byte_placeholder.join("\n")
+                + byte_placeholder_last_line;
+            let ascii_placeholder = new Array(rows - 1);
+            ascii_placeholder.fill("................");
+            document.getElementById("ascii").innerText = ascii_placeholder.join("\n")
+                + ascii_placeholder_last_line;
         }
     </script>
 </body>
