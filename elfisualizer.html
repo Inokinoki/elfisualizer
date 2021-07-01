@@ -244,16 +244,39 @@
     <script>
         const { ipcRenderer } = require('electron');
 
+        var file_name = "";
+
         window.onload = () => {
             // Temporally hide everything
             document.getElementById("elf_info").style.display = "none";
         }
 
+        function post_elfhead_info(elf) {
+            update_elf_info(elf.elf_info);
+
+            // TODO: Add section & program loading
+        }
+
+        function post_load_file(elf_data) {
+            ipcRenderer.invoke('elfhead-info', file_name).then(post_elfhead_info);
+
+            // Handle data
+            show_elf_data(elf_data);
+        }
+
+        function on_error(e) {
+            // TODO: Recover init state
+        }
+
         async function open_file(params) {
-            const statusText = document.getElementById("status")
-            statusText.innerText = "Loading...";
-            const result = await ipcRenderer.invoke('load-file');
+            const result = await ipcRenderer.invoke('open-file');
             if (result) {
+                file_name = result;
+                const statusText = document.getElementById("status")
+                statusText.innerText = "Loading " + file_name;
+                ipcRenderer.invoke('load-file', file_name).then(post_load_file);
+                // TODO: Add tasks
+                /*
                 if (result.elf_info) {
                     // Loaded
                     statusText.innerText = "ELF file \"" + result.elf_info.name
@@ -264,6 +287,7 @@
                     // Not loaded
                     statusText.innerText = "No ELF file loaded";
                 }
+                */
             } else {
                 // Nothing
                 statusText.innerText = "Nothing loaded";
@@ -281,8 +305,53 @@
             document.getElementById("info_e_shoff").innerText = elf_info.section_header_info.offset;
             // TODO: Add more information
 
-            // Initialize placeholder for contents
-            init_placeholder(elf_info);
+            document.getElementById("elf_info").style.display = "block";
+        }
+
+        function show_elf_data(elf_data) {
+            let columns = 16;
+            let rows = Math.ceil(elf_data.length / columns);
+            let elements = "";
+            var offset = 0;
+            for (var i = 0; i < rows; ++i) {
+                elements += offset.toString(16) + "</br>\n";
+                offset += columns;
+            }
+            document.getElementById('offsets').innerHTML = elements;
+            let padding = elf_data.length - (rows - 1) * columns;
+            let byte_placeholder_last_line = "";
+            let ascii_placeholder_last_line = "";
+            for (var i = 0; i < padding; i++) {
+                if (i == 0) {
+                    byte_placeholder_last_line = '\n';
+                    ascii_placeholder_last_line = '\n';
+                }
+                byte_placeholder_last_line += "00 ";
+                ascii_placeholder_last_line += ".";
+            }
+            let byte_lines = new Array(rows - 1)
+            let ascii_lines = new Array(rows - 1);
+            for (var line = 0; line < rows - 1; line++) {
+                var data_line = "";
+                var ascii_line = "";
+                for (var j = 0; j < columns; j++) {
+                    var hex = elf_data[line * columns + j].toString(16);
+                    data_line += (hex.length == 1 ? "0" + hex : hex) + " ";
+                    var ch = elf_data[line * columns + j];
+                    if (ch > 0x20 && ch < 0x7f) {
+                        ascii_line += String.fromCharCode(ch);
+                    } else {
+                        ascii_line += ".";
+                    }
+                }
+                byte_lines[line] = data_line;
+                ascii_lines[line] = ascii_line;
+            }
+            // byte_placeholder.fill("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ");
+            document.getElementById("bytes").innerText = byte_lines.join("\n")
+                + byte_placeholder_last_line;
+            document.getElementById("ascii").innerText = ascii_lines.join("\n")
+                + ascii_placeholder_last_line;
         }
 
         function init_placeholder(elf_info) {
