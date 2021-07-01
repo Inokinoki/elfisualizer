@@ -325,8 +325,14 @@
                     byte_placeholder_last_line = '\n';
                     ascii_placeholder_last_line = '\n';
                 }
-                byte_placeholder_last_line += "00 ";
-                ascii_placeholder_last_line += ".";
+                var hex = elf_data[(rows - 1) * columns + i].toString(16);
+                byte_placeholder_last_line += (hex.length == 1 ? "0" + hex : hex) + " ";
+                var ch = elf_data[(rows - 1) * columns + i];
+                if (ch > 0x20 && ch < 0x7f) {
+                    ascii_placeholder_last_line += String.fromCharCode(ch);
+                } else {
+                    ascii_placeholder_last_line += ".";
+                }
             }
             let byte_lines = new Array(rows - 1)
             let ascii_lines = new Array(rows - 1);
@@ -346,7 +352,6 @@
                 byte_lines[line] = data_line;
                 ascii_lines[line] = ascii_line;
             }
-            // byte_placeholder.fill("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ");
             document.getElementById("bytes").innerText = byte_lines.join("\n")
                 + byte_placeholder_last_line;
             document.getElementById("ascii").innerText = ascii_lines.join("\n")
