@@ -252,9 +252,10 @@
         }
 
         function post_elfhead_info(elf) {
-            update_elf_info(elf.elf_info);
+            update_elf_info(elf);
 
             // TODO: Add section & program loading
+            on_elf_loaded();
         }
 
         function post_load_file(elf_data) {
@@ -264,8 +265,13 @@
             show_elf_data(elf_data);
         }
 
+        function on_elf_loaded() {
+            const statusText = document.getElementById("status");
+            statusText.innerText = "ELF file loaded";
+        }
         function on_error(e) {
-            // TODO: Recover init state
+            const statusText = document.getElementById("status");
+            statusText.innerText = "ELF file loading failed";
         }
 
         async function open_file(params) {
@@ -275,19 +281,6 @@
                 const statusText = document.getElementById("status")
                 statusText.innerText = "Loading " + file_name;
                 ipcRenderer.invoke('load-file', file_name).then(post_load_file);
-                // TODO: Add tasks
-                /*
-                if (result.elf_info) {
-                    // Loaded
-                    statusText.innerText = "ELF file \"" + result.elf_info.name
-                        + "\" loaded";
-                    update_elf_info(result.elf_info);
-                    document.getElementById("elf_info").style.display = "block";
-                } else {
-                    // Not loaded
-                    statusText.innerText = "No ELF file loaded";
-                }
-                */
             } else {
                 // Nothing
                 statusText.innerText = "Nothing loaded";
@@ -303,7 +296,13 @@
             document.getElementById("info_e_shnum").innerText = elf_info.section_header_info.num;
             document.getElementById("info_e_shentsize").innerText = elf_info.section_header_info.size;
             document.getElementById("info_e_shoff").innerText = elf_info.section_header_info.offset;
-            // TODO: Add more information
+
+            document.getElementById("info_class_value").innerText = elf_info.class;
+            document.getElementById("info_data_value").innerText = elf_info.endian;
+            document.getElementById("info_abi_value").innerText = elf_info.osabi;
+            document.getElementById("info_e_type_value").innerText = elf_info.type;
+            document.getElementById("info_e_machine_value").innerText = elf_info.machine;
+            document.getElementById("info_e_entry_value").innerText = "0x" + elf_info.entry.toString(16);
 
             document.getElementById("elf_info").style.display = "block";
         }

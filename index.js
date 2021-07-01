@@ -48,26 +48,18 @@ function load_elf(event, filename) {
     // FIXME: Use real data
     // TODO: Use typescript
     return {
-      elf: elf,
-      elf_info: {
-        size: cached_elf_files[filename].bytes.length,
-        name: filename,
-        class: 0,
-        encoding: 1,
-        abi: 0,
-        file_type: 0,
-        arch: 0,
-        entry_point: 64,
-        program_header_info: {
-          num: 5,
-          size: 64,
-          offset: 64
-        },
-        section_header_info: {
-          num: 5,
-          size: 64,
-          offset: 64
-        }
+      ...elf.header,
+      size: cached_elf_files[filename].bytes.length,
+      name: filename,
+      program_header_info: {
+        num: elf.header.phnum,
+        size: elf.header.phentsize,
+        offset: elf.header.phoff
+      },
+      section_header_info: {
+        num: elf.header.shnum,
+        size: elf.header.shentsize,
+        offset: elf.header.shoff
       }
     };
   }
