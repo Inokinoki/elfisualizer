@@ -66,6 +66,24 @@ function load_elf(event, filename) {
   return null;
 }
 
+function load_progsec(event, filename) {
+  // Read the file into a buffer
+  if (!cached_elf_files[filename].elf) {
+    load_elf(event, filename)
+  }
+
+  const elf = cached_elf_files[filename].elf
+
+  return {
+    sections: elf.sections.map((section) => {
+      return section.header;
+    }),
+    programs: elf.programs.map((program) => {
+      return program.header;
+    })
+  };
+}
+
 app.whenReady().then(() => {
   createWindow()
 
@@ -78,8 +96,7 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('load-file', load_file)    // Load file content
   ipcMain.handle('elfhead-info', load_elf)  // Load basic information
-  // ipcMain.handle('section-info', load_file)
-  // ipcMain.handle('program-info', load_file)
+  ipcMain.handle('progsec-info', load_progsec)  // Load sec information
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

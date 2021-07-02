@@ -245,16 +245,25 @@
         const { ipcRenderer } = require('electron');
 
         var file_name = "";
+        var data = null;
 
         window.onload = () => {
             // Temporally hide everything
             document.getElementById("elf_info").style.display = "none";
         }
 
+        function post_progsec_info(result) {
+            const sections = result.sections;
+            const programs = result.programs;
+            // Show ELF data with sections and programs
+            show_elf_data_with_extra_info(data, sections, programs);
+        }
+
         function post_elfhead_info(elf) {
             update_elf_info(elf);
 
-            // TODO: Add section & program loading
+            // Add section & program loading
+            ipcRenderer.invoke('progsec-info', file_name).then(post_progsec_info);
             on_elf_loaded();
         }
 
@@ -262,7 +271,8 @@
             ipcRenderer.invoke('elfhead-info', file_name).then(post_elfhead_info);
 
             // Handle data
-            show_elf_data(elf_data);
+            data = elf_data;
+            // show_elf_data(elf_data);
         }
 
         function on_elf_loaded() {
@@ -358,9 +368,9 @@
                 + ascii_placeholder_last_line;
         }
 
-        function init_placeholder(elf_info) {
+        function show_elf_data_with_extra_info(elf_data, sections, programs) {
             let columns = 16;
-            let rows = Math.ceil(elf_info.size / columns);
+            let rows = Math.ceil(elf_data.length / columns);
             let elements = "";
             var offset = 0;
             for (var i = 0; i < rows; ++i) {
@@ -368,25 +378,93 @@
                 offset += columns;
             }
             document.getElementById('offsets').innerHTML = elements;
-            let padding = elf_info.size - (rows - 1) * columns;
+            let padding = elf_data.length - (rows - 1) * columns;
             let byte_placeholder_last_line = "";
             let ascii_placeholder_last_line = "";
-            for (var i = 0; i < padding; i++) {
+
+            var sec_indice = sections.map((section) => {
+                return section.offset;
+            });
+            var sec_end_indice = sections.map((section) => {
+                return section.offset + section.size;
+            });
+            var prog_indice = programs.map((program) => {
+                return program.offset;
+            });
+            var prog_end_indice = programs.map((program) => {
+                return program.offset + program.filesz;
+            });
+
+            var index = (rows - 1) * columns;
+            for (var i = 0; i < padding; i++, index++) {
                 if (i == 0) {
                     byte_placeholder_last_line = '\n';
                     ascii_placeholder_last_line = '\n';
                 }
-                byte_placeholder_last_line += "00 ";
-                ascii_placeholder_last_line += ".";
+                const prog_index = prog_indice.indexOf(index);
+                if (prog_index >= 0) {
+                    byte_placeholder_last_line += ("<span id='bin_segment" + prog_index + "' class='segment hover'>");
+                }
+                if (prog_end_indice.includes(index)) {
+                    byte_placeholder_last_line += "</span>";
+                }
+                const potential_index = sec_indice.indexOf(index);
+                if (potential_index >= 0) {
+                    byte_placeholder_last_line += ("<span id='bin_section" + potential_index + "' class='section hover'>");
+                }
+                if (sec_end_indice.includes(index)) {
+                    byte_placeholder_last_line += "</span>";
+                }
+                
+                var hex = elf_data[(rows - 1) * columns + i].toString(16);
+                byte_placeholder_last_line += (hex.length == 1 ? "0" + hex : hex) + " ";
+                var ch = elf_data[(rows - 1) * columns + i];
+                if (ch > 0x20 && ch < 0x7f) {
+                    ascii_placeholder_last_line += String.fromCharCode(ch);
+                } else {
+                    ascii_placeholder_last_line += ".";
+                }
             }
-            let byte_placeholder = new Array(rows - 1)
-            byte_placeholder.fill("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ");
-            console.log(byte_placeholder.length);
-            document.getElementById("bytes").innerText = byte_placeholder.join("\n")
+            let byte_lines = new Array(rows - 1);
+            let ascii_lines = new Array(rows - 1);
+            index = 0;
+            for (var line = 0; line < rows - 1; line++) {
+                var data_line = "";
+                var ascii_line = "";
+                for (var j = 0; j < columns; j++, index++) {
+                    var hex = elf_data[line * columns + j].toString(16);
+
+                    // Add tags of segments
+                    const prog_index = prog_indice.indexOf(index);
+                    if (prog_index >= 0) {
+                        data_line += ("<span id='bin_segment" + prog_index + "' class='segment hover'>");
+                    }
+                    if (prog_end_indice.includes(index)) {
+                        data_line += "</span>";
+                    }
+                    // Add tags of sections
+                    const potential_index = sec_indice.indexOf(index);
+                    if (potential_index >= 0) {
+                        data_line += ("<span id='bin_section" + potential_index + "' class='section hover'>");
+                    }
+                    if (sec_end_indice.includes(index)) {
+                        data_line += "</span>";
+                    }
+
+                    data_line += (hex.length == 1 ? "0" + hex : hex) + " ";
+                    var ch = elf_data[line * columns + j];
+                    if (ch > 0x20 && ch < 0x7f) {
+                        ascii_line += String.fromCharCode(ch);
+                    } else {
+                        ascii_line += ".";
+                    }
+                }
+                byte_lines[line] = data_line;
+                ascii_lines[line] = ascii_line;
+            }
+            document.getElementById("bytes").innerHTML = byte_lines.join("\n")
                 + byte_placeholder_last_line;
-            let ascii_placeholder = new Array(rows - 1);
-            ascii_placeholder.fill("................");
-            document.getElementById("ascii").innerText = ascii_placeholder.join("\n")
+            document.getElementById("ascii").innerText = ascii_lines.join("\n")
                 + ascii_placeholder_last_line;
         }
     </script>
