@@ -263,7 +263,7 @@
             update_elf_info(elf);
 
             // Add section & program loading
-            ipcRenderer.invoke('progsec-info', file_name).then(post_progsec_info);
+            // ipcRenderer.invoke('progsec-info', file_name).then(post_progsec_info);
             on_elf_loaded();
         }
 
@@ -272,7 +272,7 @@
 
             // Handle data
             data = elf_data;
-            // show_elf_data(elf_data);
+            show_elf_data(elf_data);
         }
 
         function on_elf_loaded() {
